@@ -1,7 +1,6 @@
 <!doctype HTML>
 <html lang="es">
   <head>
-    <!-- Para ver si funciona -->
     <!-- Meta tags -->
     <meta charset="utf-8">
     <title>Cuentos x Telefono</title>
