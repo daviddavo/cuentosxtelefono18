@@ -1,5 +1,6 @@
 {
     "require": {
-        "unreal4u/telegram-api": "^3.3"
+        "unreal4u/telegram-api": "^3.3",
+        "monolog/monolog": "^1.23"
     }
 }
