@@ -4,9 +4,17 @@
   use \unreal4u\TelegramAPI\Telegram\Types\Update;
   use \unreal4u\TelegramAPI\Telegram\Methods\SendMessage;
 
+  function createFromRango(int $rango, $args){
+    switch($rango):
+      case 100: return new Admin(...$args);
+      case 50: return new Organizador(...$args);
+      case 0: return new BaseUser(...$args);
+    endswitch;
+  }
+
   class BaseUser {
     public $id = 0;
-    static public $rango; /* Rango de la clase */
+    public $rango; /* Rango de la clase */
     // Comandos disponibles del usuario. Usado también en testing
 
     public function __construct($user, $tgLog, $logger, $db){
@@ -16,10 +24,14 @@
       $this->logger = $logger;
       $this->db = $db;
       $this->rango = 0;
+      $this->user = $user;
       $this->available_commands = [
         "start" => "Inicia el bot",
-        "help" => "Muestra esta ayuda"
+        "help" => "Muestra esta ayuda",
+        "lineas" => "Muestra las lineas disponibles"
       ];
+      // tries to update last connection date
+      $this->db->update_connection($this->id);
 
       $this->logger->debug("Finished building user");
     }
@@ -33,7 +45,7 @@
       endswitch;
     }
 
-    final private function sendSimpleMsg(string $text){
+    final protected function sendSimpleMsg(string $text){
       $response = new SendMessage();
       $response->text = $text;
       $response->chat_id = $this->id;
@@ -44,15 +56,14 @@
     public function exec(Update $update){
       // Update las connection
       // TODO: Test which error returns
-      $this->db->update_connection($this->id);
 
       $command = trim($update->message->text, " \t\n\r\0\x0B/");
+      $command = explode(" ", $command)[0];
       $this->logger->info("Executing command $command");
       switch($command):
-        case "start":
-          return $this->start($update);
-        case "help":
-          return $this->help($update);
+        case "start": return $this->start($update);
+        case "help": return $this->help($update);
+        case "lineas": return $this->lineas($update);
         default:
           $this->logger->info("Command {$command} not implemented, available commands: ".json_encode($this->available_commands));
           return false;
@@ -80,8 +91,71 @@ EOS;
       }
       return $this->sendSimpleMsg($helpText);
     }
+
+    public function lineas(Update $update){
+      $this->sendSimpleMsg("Lo siento, este método no está aún implementado :(");
+    }
   }
 
-  class Admin extends BaseUser{
-    
+  class Organizador extends BaseUser{
+    public function __construct($user, $tgLog, $logger, $db){
+      parent::__construct($user, $tgLog, $logger, $db);
+      $this->rango = 50;
+      $this->available_commands["menu"] = "Muestra el menú para abrir y cerrar lineas en #cxt18 (lo mismo el hashtag cambia)";
+    }
+
+    public function exec(Update $update){
+      $command = trim($update->message->text, " \t\n\r\0\x0B/");
+      $command = explode(" ", $command)[0];
+      switch($command):
+        case "menu": return $this->showMenu($update);
+        default: return parent::exec($update);
+      endswitch;
+    }
+
+    public function showMenu(Update $update){
+      $this->logger->debug("Showing main menu");
+    }
+
+    public function lineas(Update $update){
+      // Primero obtener las lineas, luego mostrarlas en formato
+      // <id> <numero> <localizacion> <status> <tiempo abierta/cerrada>
+      $text = "<id> <numero> <localizacion> <status> <last_update>\n";
+      $format = "%d %s %s %s\n";
+      foreach($this->db->getLineas() as $linea){
+        $text .= sprintf($format, $linea["id"], $linea["phone_number"], $linea["location"], $linea["status"]);
+        $this->logger->info(json_encode($linea));
+      }
+
+      $this->sendSimpleMsg($text);
+    }
+  }
+
+  class Admin extends Organizador{
+    public function __construct($user, $tgLog, $logger, $db){
+      parent::__construct($user, $tgLog, $logger, $db);
+      $this->rango = 100;
+      $this->available_commands["lineas"] = "Muestra todas las lineas";
+      $this->available_commands["su"] = "<rango> <comando> hace el comando emulando ser ese rango";
+    }
+
+
+    public function exec(Update $update){
+      $command = trim($update->message->text, " \t\n\r\0\x0B/");
+      $this->logger->debug(json_encode(explode(" ", $command)));
+      $command = explode(" ", $command)[0];
+      $this->logger->info("Executing command as admin $command");
+      switch($command):
+        case "su": return $this->su($update);
+        default: return parent::exec($update);
+      endswitch;
+    }
+
+    public function su(Update $update){
+      $this->logger->info("/su execution");
+      $arr = explode(" ", $update->message->text, 3);
+      $user = createFromRango((int)$arr[1], [$this->user, $this->tgLog, $this->logger, $this->db]);
+      $update->message->text = $arr[2];
+      $user->exec($update);
+    }
   }

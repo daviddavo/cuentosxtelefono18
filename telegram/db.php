@@ -24,14 +24,16 @@ class database{
   private function query(string $query){
     $res = $this->conn->query($query);
     if($res === true){
-    }else if ($res){
-      $res = $res->fetch_array();
+    }else if ($res->num_rows == 1){
+      $res = $res->fetch_assoc();
+    }else if ($res->num_rows > 1){
+      $res = $res->fetch_all(MYSQLI_ASSOC);
     }else{
       $this->logger->error("SQL Error: ". $query . "\n" . $this->conn->error);
       return false;
     }
 
-    $this->logger->info("Performed query: ". $query . "\n Response: " . var_export($res,true));
+    $this->logger->info("Performed query: ". $query . "\n Response: " . json_encode($res,true));
     return $res;
   }
 
@@ -47,9 +49,19 @@ class database{
     return $res != NULL;
   }
 
+  public function getUser($id){
+    $query = "SELECT * FROM `".DB_USERS_TABLE."` WHERE user_id={$id}";
+    $res = $this->query($query);
+    return $res;
+  }
+
   public function update_connection($id){
     $query = "UPDATE `".DB_USERS_TABLE."` SET last_connection=CURRENT_TIMESTAMP WHERE user_id={$id}";
     $this->query($query);
+  }
+
+  public function getLineas(){
+    return $this->query("SELECT * FROM `".DB_LINES_TABLE."`");
   }
 
   public function close(){ $this->conn->close();}

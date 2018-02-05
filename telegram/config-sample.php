@@ -10,3 +10,4 @@
   define('DB_PASSWORD', "1234");
   define('DB_DATABASE', "cxt");
   define('DB_USERS_TABLE', "users");
+  define('DB_LINES_TABLE', "lineas");

@@ -35,10 +35,12 @@ class mainBot{
   public function webHookHandler(array $updateData){
     $this->logger->info("webHook activado: " . json_encode($updateData, true));
     $update = new Update($updateData);
-    $this->logger->info(var_export($update, true));
+    $this->logger->info(json_encode($update, true));
 
     // TODO: Switch con cada tipo de usuario
-    $user = new BaseUser($update->message->from, $this->tgLog, $this->logger, $this->db);
+    $args = [$update->message->from, $this->tgLog, $this->logger, $this->db];
+
+    $user = createFromRango($this->db->getUser($update->message->from->id)["rango"], $args);
     $user->exec($update);
   }
 
