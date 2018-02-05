@@ -23,14 +23,16 @@ class database{
 
   private function query(string $query){
     $res = $this->conn->query($query);
-    if($res){
+    if($res === true){
+    }else if ($res){
       $res = $res->fetch_array();
-      $this->logger->info("Performed query: ". $query . "\n Response: " . var_export($res,true));
-      return $res;
     }else{
       $this->logger->error("SQL Error: ". $query . "\n" . $this->conn->error);
       return false;
     }
+
+    $this->logger->info("Performed query: ". $query . "\n Response: " . var_export($res,true));
+    return $res;
   }
 
   public function insertUser($id, $username){
