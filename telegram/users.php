@@ -3,6 +3,8 @@
 
   use \unreal4u\TelegramAPI\Telegram\Types\Update;
   use \unreal4u\TelegramAPI\Telegram\Methods\SendMessage;
+  use \unreal4u\TelegramAPI\Telegram\Types\Inline\Keyboard\Markup;
+  use \unreal4u\TelegramAPI\Telegram\Types\Inline\Keyboard\Button;
 
   function createFromRango(int $rango, $args){
     switch($rango):
@@ -115,6 +117,30 @@ EOS;
 
     public function showMenu(Update $update){
       $this->logger->debug("Showing main menu");
+      $kmarkup = new Markup();
+      $i = 0;
+
+      $alredy_shown = [];
+      foreach($this->db->getLineas() as $linea){
+        $button = new Button();
+        if(!in_array($linea["phone_number"], $alredy_shown)){
+          array_push($alredy_shown, $linea["phone_number"]);
+          $button->text = sprintf("%s", $linea["phone_number"]);
+          $button->callback_data = "nmr:".$linea["phone_number"];
+          $kmarkup->inline_keyboard[$i][0] = $button;
+          $i++;
+        }
+      }
+      $this->logger->debug("Created markup " . var_export($kmarkup, true));
+
+      $msg = new SendMessage();
+      $msg->chat_id = $this->id;
+      $msg->text = "Elige una línea que administrar: ";
+      $msg->reply_markup = $kmarkup;
+
+      $this->logger->debug("Sending message " . var_export($msg, true));
+
+      return $this->tgLog->performApiRequest($msg);
     }
 
     public function lineas(Update $update){
