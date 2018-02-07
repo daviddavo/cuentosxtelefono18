@@ -22,8 +22,12 @@ $db = new database(DB_SERVER, DB_USER, DB_PASSWORD, $logger);
 $updateData = json_decode(file_get_contents('php://input'), true);
 
 // Ahora a llamar al bot para que procese $updateData
-$bot = new mainBot(BOT_TOKEN, $logger, $httpClient, $db);
-$bot->webHookHandler($updateData);
+try {
+  $bot = new mainBot(BOT_TOKEN, $logger, $httpClient, $db);
+  $bot->webHookHandler($updateData);
+} catch (Exception $e) {
+  $logger->error("EXCEPTION: " . $e->getMessage());
+}
 
 $db->close();
 echo "Esto funciona, no?";

@@ -14,7 +14,7 @@ $loop = Factory::create();
 
 $setWebhook = new SetWebhook();
 $setWebhook->url = WEBHOOK_URL;
-$setWebhook->certificate = new InputFile(CUSTOM_CERTIFICATE);
+// $setWebhook->certificate = new InputFile(CUSTOM_CERTIFICATE);
 
 $tgLog = new TgLog(BOT_TOKEN, new HttpClientRequestHandler($loop));
 $tgLog->performApiRequest($setWebhook);
