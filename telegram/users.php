@@ -1,12 +1,12 @@
 <?php
   require_once __DIR__.'/00.common.php';
 
-  use \unreal4u\TelegramAPI\Telegram\Types\Update;
+  use \unreal4u\TelegramAPI\Telegram\Types\Message;
   use \unreal4u\TelegramAPI\Telegram\Methods\SendMessage;
   use \unreal4u\TelegramAPI\Telegram\Types\Inline\Keyboard\Markup;
   use \unreal4u\TelegramAPI\Telegram\Types\Inline\Keyboard\Button;
 
-  function createFromRango(int $rango, $args){
+  function createFromRango(int $rango, ...$args){
     switch($rango):
       case 100: return new Admin(...$args);
       case 50: return new Organizador(...$args);
@@ -20,6 +20,7 @@
     // Comandos disponibles del usuario. Usado también en testing
 
     public function __construct($user, $tgLog, $logger, $db){
+      $logger->debug("Creating user from: ". json_encode($user, true));
       $this->id = $user->id;
       $this->username = $user->username;
       $this->tgLog = $tgLog;
@@ -55,24 +56,24 @@
       return $this->tgLog->performApiRequest($response);
     }
 
-    public function exec(Update $update){
+    public function exec(Message $message){
       // Update las connection
       // TODO: Test which error returns
 
-      $command = trim($update->message->text, " \t\n\r\0\x0B/");
+      $command = trim($message->text, " \t\n\r\0\x0B/");
       $command = explode(" ", $command)[0];
       $this->logger->info("Executing command $command");
       switch($command):
-        case "start": return $this->start($update);
-        case "help": return $this->help($update);
-        case "lineas": return $this->lineas($update);
+        case "start": return $this->start($message);
+        case "help": return $this->help($message);
+        case "lineas": return $this->lineas($message);
         default:
           $this->logger->info("Command {$command} not implemented, available commands: ".json_encode($this->available_commands));
           return false;
       endswitch;
     }
 
-    final private function start(Update $update){
+    final private function start(Message $message){
       $startText = <<<EOS
 Bienvenido al Bot administrador de Cuentos x Telefono 2018, pon /help para ver una lista de los comandos disponibles
 Este servidor usa 'rangos', por lo que tendrás que hablar con @DSinapellido para que te ponga el rango que quieres y poder empezar a administrar
@@ -85,7 +86,7 @@ EOS;
       return $this->sendSimpleMsg($startText);
     }
 
-    final private function help(Update $update){
+    final private function help(Message $message){
       $ran = $this->ranStr($this->rango);
       $helpText = "Eres {$ran} y tus comandos disponibles son:\n";
       foreach($this->available_commands as $command => $text){
@@ -94,7 +95,7 @@ EOS;
       return $this->sendSimpleMsg($helpText);
     }
 
-    public function lineas(Update $update){
+    public function lineas(Message $message){
       $this->sendSimpleMsg("Lo siento, este método no está aún implementado :(");
     }
   }
@@ -102,20 +103,21 @@ EOS;
   class Organizador extends BaseUser{
     public function __construct($user, $tgLog, $logger, $db){
       parent::__construct($user, $tgLog, $logger, $db);
+      $this->logger->debug("Created organizador");
       $this->rango = 50;
       $this->available_commands["menu"] = "Muestra el menú para abrir y cerrar lineas en #cxt18 (lo mismo el hashtag cambia)";
     }
 
-    public function exec(Update $update){
-      $command = trim($update->message->text, " \t\n\r\0\x0B/");
+    public function exec(Message $message){
+      $command = trim($message->text, " \t\n\r\0\x0B/");
       $command = explode(" ", $command)[0];
       switch($command):
-        case "menu": return $this->showMenu($update);
-        default: return parent::exec($update);
+        case "menu": return $this->showMenu($message);
+        default: return parent::exec($message);
       endswitch;
     }
 
-    public function showMenu(Update $update){
+    public function showMenu(Message $message){
       $this->logger->debug("Showing main menu");
       $kmarkup = new Markup();
       $i = 0;
@@ -143,7 +145,7 @@ EOS;
       return $this->tgLog->performApiRequest($msg);
     }
 
-    public function lineas(Update $update){
+    public function lineas(Message $message){
       // Primero obtener las lineas, luego mostrarlas en formato
       // <id> <numero> <localizacion> <status> <tiempo abierta/cerrada>
       $text = "<id> <numero> <localizacion> <status> <last_update>\n";
@@ -160,28 +162,29 @@ EOS;
   class Admin extends Organizador{
     public function __construct($user, $tgLog, $logger, $db){
       parent::__construct($user, $tgLog, $logger, $db);
+      $this->logger->debug("Created admin");
       $this->rango = 100;
       $this->available_commands["lineas"] = "Muestra todas las lineas";
       $this->available_commands["su"] = "<rango> <comando> hace el comando emulando ser ese rango";
     }
 
 
-    public function exec(Update $update){
-      $command = trim($update->message->text, " \t\n\r\0\x0B/");
+    public function exec(Message $message){
+      $command = trim($message->text, " \t\n\r\0\x0B/");
       $this->logger->debug(json_encode(explode(" ", $command)));
       $command = explode(" ", $command)[0];
       $this->logger->info("Executing command as admin $command");
       switch($command):
-        case "su": return $this->su($update);
-        default: return parent::exec($update);
+        case "su": return $this->su($message);
+        default: return parent::exec($message);
       endswitch;
     }
 
-    public function su(Update $update){
+    public function su(Message $message){
       $this->logger->info("/su execution");
-      $arr = explode(" ", $update->message->text, 3);
-      $user = createFromRango((int)$arr[1], [$this->user, $this->tgLog, $this->logger, $this->db]);
-      $update->message->text = $arr[2];
-      $user->exec($update);
+      $arr = explode(" ", $message->text, 3);
+      $user = createFromRango((int)$arr[1], ...[$this->user, $this->tgLog, $this->logger, $this->db]);
+      $message->text = $arr[2];
+      $user->exec($message);
     }
   }

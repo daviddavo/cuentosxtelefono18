@@ -30,6 +30,7 @@ class database{
       $res = $res->fetch_all(MYSQLI_ASSOC);
     }else{
       $this->logger->error("SQL Error: ". $query . "\n" . $this->conn->error);
+      $this->logger->info(">>> ".$res);
       return false;
     }
 
@@ -50,7 +51,7 @@ class database{
   }
 
   public function getUser($id){
-    $query = "SELECT * FROM `".DB_USERS_TABLE."` WHERE user_id={$id}";
+    $query = "SELECT * FROM `".DB_USERS_TABLE."` WHERE user_id='{$id}'";
     $res = $this->query($query);
     return $res;
   }

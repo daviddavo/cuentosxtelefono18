@@ -33,15 +33,22 @@ class mainBot{
   }
 
   public function webHookHandler(array $updateData){
-    $this->logger->info("webHook activado: " . json_encode($updateData, true));
     $update = new Update($updateData);
+    $this->logger->info("webHook activado: " . json_encode($update, true));
     $this->logger->info(json_encode($update, true));
 
-    // TODO: Switch con cada tipo de usuario
-    $args = [$update->message->from, $this->tgLog, $this->logger, $this->db];
+    $args = [$this->tgLog, $this->logger, $this->db];
+    if(property_exists($update, "message")){
+      $rango = 0;
+      if(strpos($update->message->text, "start") === false){
+        $rango = $this->db->getUser($update->message->from->id)["rango"];
+      }
+      $user = createFromRango($rango, $update->message->from, ...$args);
+      $user->exec($update->message);
+    } else {
+      $this->logger->error("That update type is not implemented");
+    }
 
-    $user = createFromRango($this->db->getUser($update->message->from->id)["rango"], $args);
-    $user->exec($update);
   }
 
   final private function getMe(): User
