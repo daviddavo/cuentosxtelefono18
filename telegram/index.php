@@ -7,6 +7,7 @@ use React\EventLoop\Factory;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
 use \unreal4u\TelegramAPI\HttpClientRequestHandler;
+use \unreal4u\TelegramAPI\Exceptions\ClientException;
 
 include "bot.php";
 include "db.php";
@@ -32,4 +33,10 @@ try {
 
 $db->close();
 echo "Esto funciona, no?";
-$loop->run();
+try{
+  $loop->run();
+  $logger->error("Exception not caught");
+} catch (\Exception $e){
+  $logger->error("Exception caught");
+  $logger->error(var_export($e, true));
+}

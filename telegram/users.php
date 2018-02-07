@@ -2,7 +2,9 @@
   require_once __DIR__.'/00.common.php';
 
   use \unreal4u\TelegramAPI\Telegram\Types\Message;
+  use \unreal4u\TelegramAPI\Telegram\Types\CallbackQuery;
   use \unreal4u\TelegramAPI\Telegram\Methods\SendMessage;
+  use \unreal4u\TelegramAPI\Telegram\Methods\EditMessageText;
   use \unreal4u\TelegramAPI\Telegram\Types\Inline\Keyboard\Markup;
   use \unreal4u\TelegramAPI\Telegram\Types\Inline\Keyboard\Button;
 
@@ -47,6 +49,18 @@
           return "usuario";
       endswitch;
     }
+
+    // bool to status
+    final public function b2s(bool $status){
+      if($status) {return "abierta";}
+      else return "cerrada";
+    }
+    // bool to verb
+    final public function b2v(bool $status){
+      if($status) {return "abrir";}
+      else return "cerrar";
+    }
+
 
     final protected function sendSimpleMsg(string $text){
       $response = new SendMessage();
@@ -128,7 +142,7 @@ EOS;
         if(!in_array($linea["phone_number"], $alredy_shown)){
           array_push($alredy_shown, $linea["phone_number"]);
           $button->text = sprintf("%s", $linea["phone_number"]);
-          $button->callback_data = "nmr:".$linea["phone_number"];
+          $button->callback_data = "select_number:".$linea["phone_number"];
           $kmarkup->inline_keyboard[$i][0] = $button;
           $i++;
         }
@@ -156,6 +170,68 @@ EOS;
       }
 
       $this->sendSimpleMsg($text);
+    }
+
+    public function callback_query(CallbackQuery $callBack){
+      $command = explode(":", $callBack->data, 2);
+      switch($command[0]):
+        case "select_number": return $this->select_number($callBack);
+        case "open_line": return $this->open_line($callBack);
+        case "close_line": return $this->close_line($callBack);
+        case "update_msg": return $this->update_msg($callBack);
+        default: $this->logger->info("Callback query method " . $callBack->data . " not implemented");
+      endswitch;
+    }
+
+    protected function select_number(CallbackQuery $callBack){
+      // Now we have to 'edit' the message and show the different lineas
+      // Associated with that number and close/open (and an update button)
+      $numero = explode(":", $callBack->data)[1];
+      $lineas = $this->db->getLineasWhere($numero);
+      $msg = new EditMessageText();
+      $msg->chat_id = $this->id;
+      $msg->message_id = $callBack->message->message_id;
+      $msg->text = "Editando $numero";
+      $msg->reply_markup = new Markup();
+      foreach($lineas as $line){
+          $button = new Button();
+          if($line["status"]){
+            $button->text = "Cerrar " . $line["location"];
+            $button->callback_data = "close_line:".$line["id"];
+          }else{
+            $button->text = "Abrir " . $line["location"];
+            $button->callback_data = "open_line:".$line["id"];
+          }
+          array_push($msg->reply_markup->inline_keyboard, [$button]);
+      }
+      $update_button = new Button();
+      $update_button->text = "Actualizar info";
+      $update_button->callback_data = "update_msg:$numero";
+      $back_button = new Button();
+      $back_button->text = "Atrás";
+      $back_button->callback_data = "goto:menu";
+      array_push($msg->reply_markup->inline_keyboard, [$back_button, $update_button]);
+
+      return $this->tgLog->performApiRequest($msg);
+    }
+
+    protected function open_line(CallbackQuery $callBack){
+      $id = explode(":", $callBack->data)[1];
+      $this->db->setLineStatus($id, true);
+      return $this->update_msg($callBack);
+    }
+
+    protected function close_line(CallbackQuery $callBack){
+      $id = explode(":", $callBack->data)[1];
+      $this->db->setLineStatus($id, false);
+      return $this->update_msg($callBack);
+    }
+
+    protected function update_msg(CallbackQuery $callBack){
+      // Alias of select_number
+      $tmp = explode(" ", $callBack->message->text);
+      $callBack->data = ":".end($tmp);
+      $this->select_number($callBack);
     }
   }
 

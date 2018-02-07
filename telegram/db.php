@@ -24,6 +24,7 @@ class database{
   private function query(string $query){
     $res = $this->conn->query($query);
     if($res === true){
+      $this->logger->debug("Response true, doing nothing");
     }else if ($res->num_rows == 1){
       $res = $res->fetch_assoc();
     }else if ($res->num_rows > 1){
@@ -63,6 +64,14 @@ class database{
 
   public function getLineas(){
     return $this->query("SELECT * FROM `".DB_LINES_TABLE."`");
+  }
+
+  public function setLineStatus(int $id, bool $status = false){
+    return $this->query("UPDATE `".DB_LINES_TABLE."` SET status=". ($status ? '1':'0') .", last_".($status?'close':'open')."=CURRENT_TIMESTAMP WHERE id={$id}");
+  }
+
+  public function getLineasWhere($lineas){
+    return $this->query("SELECT * FROM `".DB_LINES_TABLE."` WHERE phone_number='{$lineas}'");
   }
 
   public function close(){ $this->conn->close();}
