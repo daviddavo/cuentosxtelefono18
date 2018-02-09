@@ -22,21 +22,9 @@ $db = new database(DB_SERVER, DB_USER, DB_PASSWORD, $logger);
 
 $updateData = json_decode(file_get_contents('php://input'), true);
 
-// Ahora a llamar al bot para que procese $updateData
-// Si hay algún error durante el procesamiento, se guardará, pero no "petará" el bot
-try {
-  $bot = new mainBot(BOT_TOKEN, $logger, $httpClient, $db);
-  $bot->webHookHandler($updateData);
-} catch (Exception $e) {
-  $logger->error("EXCEPTION: " . $e->getMessage());
-}
+// Ahora a llamar al bot para que procese
+$bot = new mainBot(BOT_TOKEN, $logger, $httpClient, $db);
+$bot->webHookHandler($updateData);
 
+$loop->run();
 $db->close();
-echo "Esto funciona, no?";
-try{
-  $loop->run();
-  $logger->error("Exception not caught");
-} catch (\Exception $e){
-  $logger->error("Exception caught");
-  $logger->error(var_export($e, true));
-}

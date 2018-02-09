@@ -52,13 +52,11 @@
 
     // bool to status
     final public function b2s(bool $status){
-      if($status) {return "abierta";}
-      else return "cerrada";
+      return $status ? "abierta":"cerrada";
     }
     // bool to verb
     final public function b2v(bool $status){
-      if($status) {return "abrir";}
-      else return "cerrar";
+      return $status ? "abrir":"cerrar";
     }
 
 
@@ -120,6 +118,7 @@ EOS;
       $this->logger->debug("Created organizador");
       $this->rango = 50;
       $this->available_commands["menu"] = "Muestra el menú para abrir y cerrar lineas en #cxt18 (lo mismo el hashtag cambia)";
+      $this->available_commands["cerrarTodas"] = "Cierra TODAS las líneas. Así que ten cuidao";
     }
 
     public function exec(Message $message){
@@ -127,12 +126,12 @@ EOS;
       $command = explode(" ", $command)[0];
       switch($command):
         case "menu": return $this->showMenu($message);
+        case "cerrarTodas": return $this->cerrarTodas($message);
         default: return parent::exec($message);
       endswitch;
     }
 
-    public function showMenu(Message $message){
-      $this->logger->debug("Showing main menu");
+    private function getMenuMsg($msg){
       $kmarkup = new Markup();
       $i = 0;
 
@@ -149,14 +148,30 @@ EOS;
       }
       $this->logger->debug("Created markup " . var_export($kmarkup, true));
 
-      $msg = new SendMessage();
       $msg->chat_id = $this->id;
       $msg->text = "Elige una línea que administrar: ";
       $msg->reply_markup = $kmarkup;
 
+      $this->logger->debug("Created msg " . var_export($msg, true));
+    }
+
+    public function showMenu(Message $message){
+      $this->logger->debug("Showing main menu");
+
+      $msg = new SendMessage();
+      $this->getMenuMsg($msg);
+
       $this->logger->debug("Sending message " . var_export($msg, true));
 
       return $this->tgLog->performApiRequest($msg);
+    }
+
+    protected function cerrarTodas(Message $message){
+      // Called to close ALL linesç
+      foreach($this->db->getLineas() as $linea){
+        $this->db->setLineStatus($linea["id"], false);
+      }
+      $this->sendSimpleMsg("Cerradas todas las líneas");
     }
 
     public function lineas(Message $message){
@@ -179,8 +194,19 @@ EOS;
         case "open_line": return $this->open_line($callBack);
         case "close_line": return $this->close_line($callBack);
         case "update_msg": return $this->update_msg($callBack);
+        case "goto": return $this->goToMenu($callBack);
         default: $this->logger->info("Callback query method " . $callBack->data . " not implemented");
       endswitch;
+    }
+
+    protected function goToMenu(CallbackQuery $callBack){
+      $this->logger->debug("Returning to main menu");
+      $msg = new EditMessageText();
+      $this->getMenuMsg($msg);
+      $this->logger->debug(var_export($msg, true));
+      $msg->message_id = $callBack->message->message_id;
+
+      return $this->tgLog->performApiRequest($msg);
     }
 
     protected function select_number(CallbackQuery $callBack){
@@ -195,13 +221,9 @@ EOS;
       $msg->reply_markup = new Markup();
       foreach($lineas as $line){
           $button = new Button();
-          if($line["status"]){
-            $button->text = "Cerrar " . $line["location"];
-            $button->callback_data = "close_line:".$line["id"];
-          }else{
-            $button->text = "Abrir " . $line["location"];
-            $button->callback_data = "open_line:".$line["id"];
-          }
+          $button->text = ($line["status"] ? "Cerrar " : "Abrir ") . $line["location"];
+          $button->callback_data = ($line["status"] ? "close_line:" : "open_line:") . $line["id"];
+
           array_push($msg->reply_markup->inline_keyboard, [$button]);
       }
       $update_button = new Button();
@@ -212,6 +234,7 @@ EOS;
       $back_button->callback_data = "goto:menu";
       array_push($msg->reply_markup->inline_keyboard, [$back_button, $update_button]);
 
+      // Tries to update, if it fails because the message is the same, then does nothing
       return $this->tgLog->performApiRequest($msg);
     }
 
@@ -228,7 +251,7 @@ EOS;
     }
 
     protected function update_msg(CallbackQuery $callBack){
-      // Alias of select_number
+      // Tries to update, if it fails because the message is the same, then does nothing
       $tmp = explode(" ", $callBack->message->text);
       $callBack->data = ":".end($tmp);
       $this->select_number($callBack);

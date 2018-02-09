@@ -25,9 +25,7 @@ class database{
     $res = $this->conn->query($query);
     if($res === true){
       $this->logger->debug("Response true, doing nothing");
-    }else if ($res->num_rows == 1){
-      $res = $res->fetch_assoc();
-    }else if ($res->num_rows > 1){
+    }else if ($res->num_rows >= 1){
       $res = $res->fetch_all(MYSQLI_ASSOC);
     }else{
       $this->logger->error("SQL Error: ". $query . "\n" . $this->conn->error);

@@ -41,13 +41,13 @@ class mainBot{
     if(isset($update->message)){
       $rango = 0;
       if(strpos($update->message->text, "start") === false){
-        $rango = $this->db->getUser($update->message->from->id)["rango"];
+        $rango = $this->db->getUser($update->message->from->id)[0]["rango"];
       }
       $user = createFromRango($rango, $update->message->from, ...$args);
       $user->exec($update->message);
     } else if(isset($update->callback_query)) {
       // Asumimos que el usuario existe
-      $rango = $this->db->getUser($update->callback_query->from->id)["rango"];
+      $rango = $this->db->getUser($update->callback_query->from->id)[0]["rango"];
       $user = createFromRango($rango, $update->callback_query->from, ...$args);
       $user->callback_query($update->callback_query);
     } else {
