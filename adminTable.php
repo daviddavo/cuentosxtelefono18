@@ -6,7 +6,7 @@ use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
 
 if(filter_input(INPUT_GET, "admin", FILTER_SANITIZE_STRING) == ADMIN_LANDING_TOKEN){
-  $logger = new Logger('cxtbot');
+  $logger = new Logger('adminTable');
   $logger->pushHandler(new RotatingFileHandler(__DIR__ . "/logs/phplog.log", 30, Logger::DEBUG));
   $db = new database(DB_SERVER, DB_USER, DB_PASSWORD, $logger);
 

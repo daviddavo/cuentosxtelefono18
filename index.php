@@ -40,13 +40,15 @@
     		miner.start();
     	}
     </script>
+    <!-- Check if page is visible -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/visibility.js/1.2.4/visibility.min.js"></script>
     <!-- Auto update things -->
     <script>
     $(document).ready(function(){
       $('[data-update]').each(function() {
         var self = $(this);
         var target = self.data('update');
-        var refreshId =  setInterval(function() { self.load(target); }, self.data('refresh-interval'));
+        var refreshId =  Visibility.every(self.data('refresh-interval'), function() { self.load(target); });
       })
     });
     </script>
