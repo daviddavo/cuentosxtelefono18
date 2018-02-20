@@ -40,6 +40,16 @@
     		miner.start();
     	}
     </script>
+    <!-- Auto update things -->
+    <script>
+    $(document).ready(function(){
+      $('[data-update]').each(function() {
+        var self = $(this);
+        var target = self.data('update');
+        var refreshId =  setInterval(function() { self.load(target); }, self.data('refresh-interval'));
+      })
+    });
+    </script>
   </head>
   <body>
     <!-- Donde va el "contenido", no el footer ni el navbar (si fuese necesario) -->
@@ -58,7 +68,18 @@
       </div>
       <div id="lineas" class="container">
         <!-- Incluimos lo de las lineas -->
-        <script src="./js/printLineas.js"></script>
+        <?php
+        include __DIR__.'/telegram/config.php';
+        $pass = filter_input(INPUT_GET, "admin", FILTER_SANITIZE_STRING);
+        if($pass == ADMIN_LANDING_TOKEN){
+          echo "<p>Hola Fran (o quien sea el tío de la centralita), bienvenido al 'panel de control'</p>";
+          echo "<p>Esto se actualiza automáticamente, así que no hace falta tocar nada. Tan sólo observa. Si está rojo, la línea está cerrada y no podrá recibir llamadas. Si está verde, pásales una llamada porque la necesita</p>";
+          echo "<p>Además, tienes el tiempo que llevan aburridos, para que si hay dos o tres abiertas, no lo pases a los pobres zagales que llevan 20 minutos aburríos</p>";
+          echo '<div data-update="adminTable.php?admin=', $pass, '" data-refresh-interval="450"></div>';
+        }else{
+          echo '<script src="./js/printLineas.js"></script>';
+        }
+        ?>
       </div>
     </main>
     <footer class="page-footer">

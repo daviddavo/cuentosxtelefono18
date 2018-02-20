@@ -1,8 +1,3 @@
-
-function procLista(lista){
-  lista.forEach()
-}
-
 console.log("Prueba");
 var xmlhttp = new XMLHttpRequest();
 xmlhttp.onreadystatechange = function(){
@@ -36,7 +31,7 @@ xmlhttp.onreadystatechange = function(){
         <tr class="${bg_color}" onclick="window.location.href = 'tel:+34${linea["phone_number"]}';">
           <td class="font-weight-bold"><i class="fas fa-phone"></i> ${linea["phone_number"]}</td>
           <td>${linea['available']}/${linea['total']}</td>
-          <td class='d-none d-lg-block'>time</td>
+          <!--<td class='d-none d-lg-block'>time</td>-->
         </tr>
         `
 
