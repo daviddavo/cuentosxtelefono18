@@ -24,7 +24,7 @@ EOT;
   foreach($db->getLineas() as $linea){
     $bg_color = $linea["status"]? "bg-success":"bg-danger";
     $then = $linea[($linea["status"]==="1")?"last_close":"last_open"];
-    $t = floor(time() - strtotime($then) + 3600); // Timezone +1
+    $t = floor(time() - strtotime($then)); // Timezone +1
     $date = sprintf('%02d:%02d:%02d', ($t/3600),($t/60%60), $t%60);
 
     echo "<tr class='{$bg_color}'>";
