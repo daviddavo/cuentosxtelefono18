@@ -5,6 +5,7 @@
   use \unreal4u\TelegramAPI\Telegram\Types\CallbackQuery;
   use \unreal4u\TelegramAPI\Telegram\Methods\SendMessage;
   use \unreal4u\TelegramAPI\Telegram\Methods\EditMessageText;
+  use \unreal4u\TelegramAPI\Telegram\Methods\AnswerCallbackQuery;
   use \unreal4u\TelegramAPI\Telegram\Types\Inline\Keyboard\Markup;
   use \unreal4u\TelegramAPI\Telegram\Types\Inline\Keyboard\Button;
 
@@ -253,8 +254,16 @@ EOS;
     protected function update_msg(CallbackQuery $callBack){
       // Tries to update, if it fails because the message is the same, then does nothing
       $tmp = explode(" ", $callBack->message->text);
+
+      $response = new AnswerCallBackQuery();
+      $response->text = "Info actualizada";
+      $response->callback_query_id = $callBack->id;
+
       $callBack->data = ":".end($tmp);
       $this->select_number($callBack);
+
+      // And now send the response
+      $this->tgLog->performApiRequest($response);
     }
   }
 
@@ -265,6 +274,7 @@ EOS;
       $this->rango = 100;
       $this->available_commands["lineas"] = "Muestra todas las lineas";
       $this->available_commands["su"] = "<rango> <comando> hace el comando emulando ser ese rango";
+      $this->available_commands["addOrganizador"] = "<@usuario> Añade un organizador a la BD"
     }
 
 
@@ -275,8 +285,15 @@ EOS;
       $this->logger->info("Executing command as admin $command");
       switch($command):
         case "su": return $this->su($message);
+        case "addOrganizador": return $this->addOrganizador($message);
         default: return parent::exec($message);
       endswitch;
+    }
+
+    public function addOrganizador(Message $message){
+      $this->logger->info("Añadiendo usuario a la BD");
+      $arr = explode(" ", message->text, 2);
+      $this->db->update_rango($arr[1], 50);
     }
 
     public function su(Message $message){

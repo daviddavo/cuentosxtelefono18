@@ -55,6 +55,12 @@ class database{
     return $res;
   }
 
+  public function update_rango($userName, $rango){
+    $query = "UPDATE `".DB_USERS_TABLE."` SET rango={$rango} WHERE username='{$userName}'"
+    $res = $this->query($query);
+    return $res
+  }
+
   public function update_connection($id){
     $query = "UPDATE `".DB_USERS_TABLE."` SET last_connection=CURRENT_TIMESTAMP WHERE user_id={$id}";
     $this->query($query);
